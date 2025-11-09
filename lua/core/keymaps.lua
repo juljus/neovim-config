@@ -15,6 +15,23 @@ vim.keymap.set("v", "<leader>/", function()
     require("Comment.api").toggle.linewise(vim.fn.visualmode())
 end, { desc = "Toggle comment" })
 
+-- BUILD COMMANDS
+vim.keymap.set("n", "<leader>cb", function()
+    vim.cmd("w")  -- save file
+    local file_dir = vim.fn.expand("%:h")
+    local file_name = vim.fn.expand("%:t:r")
+    local build_dir = file_dir .. "/build"
+    local executable = build_dir .. "/" .. file_name
+    local current_file = vim.fn.expand("%")
+    
+    -- open terminal
+    vim.cmd("ToggleTerm")
+    
+    -- mkdir, build, run (stop if any fails)
+    local cmd = "mkdir -p " .. build_dir .. " && gcc -Wall -Werror -Werror=vla -g " .. current_file .. " -o " .. executable .. " && " .. executable
+    vim.cmd("TermExec cmd='" .. cmd .. "'")
+end, { noremap = true, desc = "Build and run in terminal" })
+
 -- TERMINAL
 vim.keymap.set("n", "<leader>tt", ":ToggleTerm<CR>", { noremap = true, desc = "Toggle terminal" })
 
