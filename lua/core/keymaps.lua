@@ -15,3 +15,6 @@ vim.keymap.set("v", "<leader>/", function()
     require("Comment.api").toggle.linewise(vim.fn.visualmode())
 end, { desc = "Toggle comment" })
 
+-- TERMINAL
+vim.keymap.set("n", "<leader>tt", ":ToggleTerm<CR>", { noremap = true, desc = "Toggle terminal" })
+
