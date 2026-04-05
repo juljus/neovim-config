@@ -1,13 +1,14 @@
 return {
     {
         "hrsh7th/nvim-cmp",
+        commit = "04e0ca376d6abdbfc8b52180f8ea236cbfddf782",
         event = "InsertEnter",
         dependencies = {
-            "hrsh7th/cmp-nvim-lsp",
-            "hrsh7th/cmp-buffer",
-            "hrsh7th/cmp-path",
-            "L3MON4D3/LuaSnip",
-            "saadparwaiz1/cmp_luasnip",
+            { "hrsh7th/cmp-nvim-lsp", commit = "39e2eda76828d88b773cc27a3f61d2ad782c922d" },
+            { "hrsh7th/cmp-buffer", commit = "3022dbc9166796b644a841a02de8dd1cc1d311fa" },
+            { "hrsh7th/cmp-path", commit = "1186cbde25c1518e43bbea73a2ac8f01a9bc26c8" },
+            { "L3MON4D3/LuaSnip", tag = "v2.3.0" },
+            { "saadparwaiz1/cmp_luasnip", commit = "05a9ab28b53f71d1aece421ef32fee2cb857a843" },
         },
 
         config = function()

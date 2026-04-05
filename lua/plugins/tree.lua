@@ -1,6 +1,7 @@
 return {
     {
         "nvim-tree/nvim-tree.lua",
+        tag = "v1.7.1",
         cmd = { "NvimTreeToggle", "NvimTreeFocus" }, -- lazy load on command
         keys = {
             { "<leader>e", "<cmd>NvimTreeToggle<cr>", desc = "Toggle File Explorer" },

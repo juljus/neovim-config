@@ -1,6 +1,7 @@
 return {
     {
         "nvim-lualine/lualine.nvim",
+        commit = "7d131a8d3ba5016229e8a1d08bf8782acea98852",
         config = function()
             local colors = require("core.colors")
             require("lualine").setup({

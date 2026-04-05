@@ -1,9 +1,10 @@
 return {
     {
         "L3MON4D3/LuaSnip",
+        tag = "v2.3.0",
         event = "InsertEnter",
         dependencies = {
-            "rafamadriz/friendly-snippets",
+            { "rafamadriz/friendly-snippets", commit = "dcd4a586439a1c81357d5b9d26319ae218cc9479" },
         },
         config = function()
             local ls = require("luasnip")

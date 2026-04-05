@@ -2,6 +2,7 @@ return {
   -- Inline Git signs & blame
   {
     "lewis6991/gitsigns.nvim",
+    tag = "v1.0.0",
     event = { "BufReadPre", "BufNewFile" },
     config = function()
       require("gitsigns").setup({
@@ -23,6 +24,7 @@ return {
   -- Neogit UI
   {
     "NeogitOrg/neogit",
+    tag = "nvim-0.9-compat",
     dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope.nvim" },
     cmd = "Neogit", -- load only when Neogit is called
     keys = {

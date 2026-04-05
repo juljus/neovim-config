@@ -2,27 +2,23 @@
 
 set -e
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Repository URL
-REPO_URL="https://github.com/juljus/neovim-config.git"
+REPO_URL="https://github.com/juljus/neovim-config"
+ARCHIVE_URL="${REPO_URL}/archive/refs/heads/main.tar.gz"
 
-# Function to print error and exit
 error_exit() {
     echo -e "${RED}Error: $1${NC}" >&2
     exit 1
 }
 
-# Function to print success message
 success_msg() {
     echo -e "${GREEN}$1${NC}"
 }
 
-# Function to print info message
 info_msg() {
     echo -e "${YELLOW}$1${NC}"
 }
@@ -31,96 +27,94 @@ echo "Neovim Configuration Installer"
 echo "==============================="
 echo ""
 
-# Check if Neovim is installed
+# Check for curl
+if ! command -v curl >/dev/null 2>&1; then
+    error_exit "curl is not installed. Please install it and try again."
+fi
+
+# Check for tar
+if ! command -v tar >/dev/null 2>&1; then
+    error_exit "tar is not installed. Please install it and try again."
+fi
+
+# Check for a C compiler (needed for treesitter parser compilation)
+if ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
+    error_exit "No C compiler found (cc or gcc). Treesitter parsers need one to compile."
+fi
+
+# Check for Neovim
 echo "Checking for Neovim..."
 if ! command -v nvim >/dev/null 2>&1; then
-    error_exit "Neovim is not installed on your system. Please install it and run this script again."
+    error_exit "Neovim is not installed. Please install it (>= 0.9) and try again."
 fi
-success_msg "Neovim found."
+
+NVIM_VERSION=$(nvim --version | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+NVIM_MAJOR=$(echo "$NVIM_VERSION" | cut -d. -f1)
+NVIM_MINOR=$(echo "$NVIM_VERSION" | cut -d. -f2)
+
+if [ "$NVIM_MAJOR" -eq 0 ] && [ "$NVIM_MINOR" -lt 9 ]; then
+    error_exit "Neovim $NVIM_VERSION is too old. This config requires >= 0.9."
+fi
+
+success_msg "Neovim $NVIM_VERSION found."
 echo ""
 
-# Check if Git is installed
-echo "Checking for Git..."
-if ! command -v git >/dev/null 2>&1; then
-    error_exit "Git is not installed on your system. Please install it and run this script again."
-fi
-success_msg "Git found."
-echo ""
-
-# Get Neovim config directory
+# Detect config directory
 echo "Detecting Neovim config directory..."
-CONFIG_DIR=$(echo 'io.write(vim.fn.stdpath("config"))' | nvim -l - 2>/dev/null)
+CONFIG_DIR=$(nvim --headless -c 'lua io.write(vim.fn.stdpath("config"))' -c 'q' 2>&1)
 if [ -z "$CONFIG_DIR" ]; then
     error_exit "Could not detect Neovim config directory."
 fi
 echo "Config directory: $CONFIG_DIR"
 echo ""
 
-# Variables for backup
+# Handle existing config
 BACKUP_DIR=""
-BACKUP_CREATED=false
-
-# Function to restore backup
-restore_backup() {
-    if [ "$BACKUP_CREATED" = true ] && [ -d "$BACKUP_DIR" ]; then
-        info_msg "Restoring backup..."
-        rm -rf "$CONFIG_DIR"
-        mv "$BACKUP_DIR" "$CONFIG_DIR"
-        success_msg "Backup restored to $CONFIG_DIR"
-    fi
-}
-
-# Check if config directory exists
-if [ -d "$CONFIG_DIR" ]; then
+if [ -d "$CONFIG_DIR" ] || [ -L "$CONFIG_DIR" ]; then
     info_msg "Existing Neovim configuration detected."
     echo -n "Do you want to backup the current configuration? [Y/n]: "
     read -r answer
     echo ""
-    
+
     if [ "$answer" = "n" ] || [ "$answer" = "N" ]; then
-        info_msg "Skipping backup. Removing old configuration..."
+        info_msg "Removing old configuration..."
         rm -rf "$CONFIG_DIR"
-        echo "Old configuration removed."
     else
-        # Create timestamped backup
         TIMESTAMP=$(date +"%Y-%m-%d_%H%M%S")
-        CONFIG_PARENT_DIR=$(dirname "$CONFIG_DIR")
-        BACKUP_DIR="$CONFIG_PARENT_DIR/nvim_backup_$TIMESTAMP"
-        
+        BACKUP_DIR="$(dirname "$CONFIG_DIR")/nvim_backup_$TIMESTAMP"
         echo "Creating backup..."
         mv "$CONFIG_DIR" "$BACKUP_DIR"
-        BACKUP_CREATED=true
         success_msg "Backup created: $BACKUP_DIR"
     fi
     echo ""
 fi
 
-# Clone the repository
-echo "Cloning Neovim configuration from repository..."
-echo "Repository: $REPO_URL"
-echo ""
+# Download and extract config
+echo "Downloading configuration..."
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
 
-if ! git clone "$REPO_URL" "$CONFIG_DIR"; then
-    error_exit "Failed to clone repository. Restoring backup if available..."
-    restore_backup
+if ! curl -sL "$ARCHIVE_URL" -o "$TMPDIR/config.tar.gz"; then
+    error_exit "Failed to download configuration."
 fi
 
-success_msg "Repository cloned successfully!"
+tar xzf "$TMPDIR/config.tar.gz" -C "$TMPDIR"
+mv "$TMPDIR/neovim-config-main" "$CONFIG_DIR"
+
+success_msg "Configuration installed!"
 echo ""
 
-# Success message
 echo "======================================"
-success_msg "Installation completed successfully!"
+success_msg "Installation complete!"
 echo "======================================"
 echo ""
 echo "Next steps:"
-echo "  1. Launch Neovim with: nvim"
-echo "  2. Lazy.nvim will automatically install all plugins on first launch"
-echo "  3. To update the configuration in the future, run: git pull"
-echo "     (from inside $CONFIG_DIR)"
+echo "  1. Launch Neovim: nvim"
+echo "  2. Plugins install automatically on first launch."
+echo "  3. Treesitter parsers compile in the background."
 echo ""
-if [ "$BACKUP_CREATED" = true ]; then
-    echo "Your old configuration has been backed up to:"
+if [ -n "$BACKUP_DIR" ]; then
+    echo "Old configuration backed up to:"
     echo "  $BACKUP_DIR"
     echo ""
 fi
